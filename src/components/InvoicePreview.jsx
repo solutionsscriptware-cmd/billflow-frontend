@@ -188,18 +188,18 @@ const InvoicePreview = ({ invoice, onClose }) => {
               <tbody>
                 {invoice.items.map((item, i) => (
                   <tr key={i} className="hover:bg-gray-50">
-                    <td className="px-2 py-2">{i + 1}</td>
-                    <td className="px-2 py-2">{item.product_name}</td>
-                    <td className="text-right px-2 py-2">
+                    <td className="px-2 py-1">{i + 1}</td>
+                    <td className="px-2 py-1">{item.product_name}</td>
+                    <td className="text-right px-2 py-1">
                       {item.quantity}
                     </td>
-                    <td className="text-right px-2 py-2">
+                    <td className="text-right px-2 py-1">
                       ₹{item.price.toFixed(2)}
                     </td>
-                    <td className="text-right px-2 py-2">
+                    <td className="text-right px-2 py-1">
                       {item.gst_rate}%
                     </td>
-                    <td className="text-right px-2 py-2">
+                    <td className="text-right px-2 py-1">
                       ₹{item.total.toFixed(2)}
                     </td>
                   </tr>
