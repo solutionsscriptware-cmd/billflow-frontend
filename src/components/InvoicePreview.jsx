@@ -104,32 +104,44 @@ const InvoicePreview = ({ invoice, onClose }) => {
             ref={printRef}
             className="print-content bg-white p-8 rounded-lg border text-black"
           >
-            {/* HEADER */}
-            <div className="flex justify-between items-start border-b pb-6 mb-6">
-              <div>
-                <h1 className="text-3xl font-bold text-primary mb-2">
-                  {companySettings.company_name}
-                </h1>
+           {/* HEADER */}
+<div className="flex justify-between items-start border-b pb-4 mb-4">
+  <div>
+    <h1 className="text-2xl font-bold text-primary mb-1">
+      {companySettings.company_name}
+    </h1>
 
-                {companySettings.address && (
-                  <p>{companySettings.address}</p>
-                )}
-                {companySettings.phone && (
-                  <p>Phone: {companySettings.phone}</p>
-                )}
-                {companySettings.email && (
-                  <p>Email: {companySettings.email}</p>
-                )}
-                {companySettings.gst_number && (
-                  <p className="font-mono">
-                    GST: {companySettings.gst_number}
-                  </p>
-                )}
-              </div>
+    <div className="text-sm leading-tight text-gray-700">
+      {companySettings.address && (
+        <p className="whitespace-pre-line">
+          {companySettings.address}
+        </p>
+      )}
+
+      {companySettings.phone && (
+        <p className="mt-1">
+          Phone: {companySettings.phone}
+        </p>
+      )}
+
+      {companySettings.email && (
+        <p>
+          Email: {companySettings.email}
+        </p>
+      )}
+
+      {companySettings.gst_number && (
+        <p className="font-mono text-xs mt-1">
+          GST: {companySettings.gst_number}
+        </p>
+      )}
+    </div>
+  </div>
+
 
               <div className="text-right">
-                <h2 className="text-2xl font-bold">INVOICE</h2>
-                <p className="font-mono font-semibold text-lg">
+                <h2 className="text-l font-bold">INVOICE</h2>
+                <p className="font-mono font-semibold text-medium">
                   {invoice.invoice_number}
                 </p>
                 <p>
@@ -141,12 +153,12 @@ const InvoicePreview = ({ invoice, onClose }) => {
 
             {/* BILL TO */}
             <div className="mb-6">
-              <h3 className="font-semibold mb-1">Bill To:</h3>
-              <p className="text-lg">{invoice.customer_name}</p>
+              <h3 className="font-semibold mb-1 ">Bill To:</h3>
+              <p className="text-sm">{invoice.customer_name}</p>
             </div>
 
             {/* ITEMS */}
-            <table className="w-full mb-8 border-collapse">
+            <table className="w-full mb-8 border-collapse text-sm">
               <thead>
                 <tr className="border-b">
                   <th className="text-left py-2">Product</th>
@@ -170,25 +182,29 @@ const InvoicePreview = ({ invoice, onClose }) => {
             </table>
 
             {/* TOTALS */}
-            <div className="flex justify-end">
-              <div className="w-64 space-y-2">
+            <div className="flex justify-end mt-4">
+              <div className="w-60 space-y-1 text-sm">
                 <div className="flex justify-between">
-                  <span>Subtotal</span>
+                  <span className="text-gray-600">Subtotal</span>
                   <span>₹{invoice.subtotal.toFixed(2)}</span>
                 </div>
+
                 <div className="flex justify-between">
-                  <span>GST</span>
+                  <span className="text-gray-600">GST</span>
                   <span>₹{invoice.gst_amount.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between font-bold text-lg">
+
+                <div className="flex justify-between font-semibold text-base border-t pt-1">
                   <span>Total</span>
                   <span>₹{invoice.total_amount.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-green-600">
+
+                <div className="flex justify-between text-green-600 text-sm">
                   <span>Paid</span>
                   <span>₹{invoice.paid_amount.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-red-600">
+
+                <div className="flex justify-between text-red-600 text-sm">
                   <span>Balance</span>
                   <span>₹{invoice.balance_amount.toFixed(2)}</span>
                 </div>
