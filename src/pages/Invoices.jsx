@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
-import { useAuth } from "@/contexts/AuthContext";
+import api from "@/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,26 +36,22 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import InvoicePreview from "@/components/InvoicePreview";
 
-const API_URL = import.meta.env.VITE_BACKEND_URL + "/api";
+/* ======================================================= */
 
 const Invoices = () => {
-  const { getAuthHeader } = useAuth();
-
   /* ================= STATE ================= */
   const [invoices, setInvoices] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const [searchTerm, setSearchTerm] = useState("");
 
-  /* Create Invoice */
+  /* Create invoice */
   const [createOpen, setCreateOpen] = useState(false);
   const [formData, setFormData] = useState({
     customer_id: "",
     invoice_date: new Date().toISOString().slice(0, 10),
     items: [],
-    payment_method: "",
     notes: "",
   });
 
@@ -74,34 +69,35 @@ const Invoices = () => {
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
 
-  /* Edit Invoice */
+  /* Edit invoice */
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editInvoice, setEditInvoice] = useState(null);
 
-  /* ================= EFFECT ================= */
+  /* ================= LOAD ================= */
   useEffect(() => {
     fetchAll();
   }, []);
 
-  /* ================= API ================= */
   const fetchAll = async () => {
     try {
       const [inv, cust, prod] = await Promise.all([
-        axios.get(`${API_URL}/invoices`, getAuthHeader()),
-        axios.get(`${API_URL}/customers`, getAuthHeader()),
-        axios.get(`${API_URL}/products`, getAuthHeader()),
+        api.get("/api/invoices"),
+        api.get("/api/customers"),
+        api.get("/api/products"),
       ]);
+
       setInvoices(inv.data);
       setCustomers(cust.data);
       setProducts(prod.data);
-    } catch {
+    } catch (err) {
+      console.error("Fetch invoices error:", err);
       toast.error("Failed to load invoices");
     } finally {
       setLoading(false);
     }
   };
 
-  /* ================= CREATE INVOICE ================= */
+  /* ================= CREATE ================= */
   const addItem = () => {
     if (!currentItem.product_id) {
       toast.error("Select product");
@@ -149,14 +145,13 @@ const Invoices = () => {
     }
 
     try {
-      await axios.post(`${API_URL}/invoices`, formData, getAuthHeader());
+      await api.post("/api/invoices", formData);
       toast.success("Invoice created");
       setCreateOpen(false);
       setFormData({
         customer_id: "",
         invoice_date: new Date().toISOString().slice(0, 10),
         items: [],
-        payment_method: "",
         notes: "",
       });
       fetchAll();
@@ -168,7 +163,7 @@ const Invoices = () => {
   /* ================= DELETE ================= */
   const deleteInvoice = async id => {
     if (!confirm("Delete invoice?")) return;
-    await axios.delete(`${API_URL}/invoices/${id}`, getAuthHeader());
+    await api.delete(`/api/invoices/${id}`);
     toast.success("Invoice deleted");
     fetchAll();
   };
@@ -192,167 +187,7 @@ const Invoices = () => {
   return (
     <div className="space-y-6">
 
-      {/* ================= ADD PAYMENT ================= */}
-      <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Payment</DialogTitle>
-          </DialogHeader>
-
-          {selectedInvoice && (
-            <div className="space-y-4">
-              <p>Total: ₹{selectedInvoice.total_amount}</p>
-              <p>Paid: ₹{selectedInvoice.paid_amount}</p>
-              <p className="text-red-600">
-                Balance: ₹{selectedInvoice.balance_amount}
-              </p>
-
-              <Input
-                type="number"
-                placeholder="Payment amount"
-                value={paymentAmount}
-                onChange={e => setPaymentAmount(e.target.value)}
-              />
-
-              <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Payment method" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="upi">UPI</SelectItem>
-                  <SelectItem value="card">Card</SelectItem>
-                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                  <SelectItem value="cheque">Cheque</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Button
-                className="w-full"
-                onClick={async () => {
-                  try {
-                    await axios.post(
-                      `${API_URL}/payments`,
-                      {
-                        invoice_id: selectedInvoice.id,
-                        amount: Number(paymentAmount),
-                        payment_method: paymentMethod,
-                      },
-                      getAuthHeader()
-                    );
-                    toast.success("Payment added");
-                    setPaymentDialogOpen(false);
-                    fetchAll();
-                  } catch {
-                    toast.error("Payment failed");
-                  }
-                }}
-              >
-                Save Payment
-              </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* ================= EDIT INVOICE ================= */}
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Invoice</DialogTitle>
-          </DialogHeader>
-
-          {editInvoice && (
-            <form
-              className="space-y-6"
-              onSubmit={async e => {
-                e.preventDefault();
-                try {
-                  await axios.put(
-                  `${API_URL}/invoices/${editInvoice.id}`,
-                  {
-                    invoice_date: editInvoice.created_at?.slice(0, 10),
-                    notes: editInvoice.notes || "",
-                    items: editInvoice.items.map(i => ({
-                      product_id: i.product_id,
-                      product_name: i.product_name,
-                      quantity: Number(i.quantity),
-                      price: Number(i.price),
-                      gst_rate: Number(i.gst_rate),
-                      total: Number(i.total),
-                    }))
-                  },
-                  getAuthHeader()
-                );
-
-                  toast.success("Invoice updated");
-                  setEditDialogOpen(false);
-                  fetchAll();
-                } catch (err) {
-                  toast.error(err.response?.data?.detail || "Update failed");
-                }
-              }}
-            >
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Qty</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Total</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {editInvoice.items.map((item, idx) => (
-                    <TableRow key={idx}>
-                      <TableCell>{item.product_name}</TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          value={item.quantity}
-                          onChange={e => {
-                            const qty = Number(e.target.value);
-                            const updated = [...editInvoice.items];
-                            updated[idx] = {
-                              ...updated[idx],
-                              quantity: qty,
-                              total: qty * updated[idx].price,
-                            };
-                            setEditInvoice({ ...editInvoice, items: updated });
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          value={item.price}
-                          onChange={e => {
-                            const price = Number(e.target.value);
-                            const updated = [...editInvoice.items];
-                            updated[idx] = {
-                              ...updated[idx],
-                              price,
-                              total: price * updated[idx].quantity,
-                            };
-                            setEditInvoice({ ...editInvoice, items: updated });
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell>₹{item.total.toFixed(2)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-
-              <Button type="submit" className="w-full">
-                Update Invoice
-              </Button>
-            </form>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* ================= CREATE INVOICE ================= */}
+      {/* CREATE INVOICE */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogTrigger asChild>
           <Button>
@@ -366,7 +201,6 @@ const Invoices = () => {
           </DialogHeader>
 
           <form onSubmit={createInvoice} className="space-y-6">
-            {/* customer */}
             <div>
               <Label>Customer *</Label>
               <Select
@@ -388,7 +222,6 @@ const Invoices = () => {
               </Select>
             </div>
 
-            {/* date */}
             <div>
               <Label>Invoice Date</Label>
               <Input
@@ -400,7 +233,6 @@ const Invoices = () => {
               />
             </div>
 
-            {/* items */}
             <div className="border p-4 rounded-lg space-y-4">
               <h3 className="font-semibold">Add Items</h3>
 
@@ -487,7 +319,7 @@ const Invoices = () => {
         </DialogContent>
       </Dialog>
 
-      {/* ================= SEARCH ================= */}
+      {/* SEARCH */}
       <div className="relative">
         <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
         <Input
@@ -498,7 +330,7 @@ const Invoices = () => {
         />
       </div>
 
-      {/* ================= TABLE ================= */}
+      {/* TABLE */}
       <Card>
         <CardContent>
           {loading ? (
@@ -533,13 +365,20 @@ const Invoices = () => {
                       <Button
                         size="icon"
                         variant="ghost"
-                        onClick={() => {
-                          setEditInvoice(JSON.parse(JSON.stringify(inv)));
-                          setEditDialogOpen(true);
-                        }}
+                        onClick={async () => {
+                            try {
+                              const res = await api.get(`/api/invoices/${inv.id}`);
+                              setEditInvoice(res.data); // full invoice with items[]
+                              setEditDialogOpen(true);
+                            } catch (err) {
+                              toast.error("Failed to load invoice for editing");
+                            }
+                          }}
+
                       >
                         ✏️
                       </Button>
+
 
                       {inv.payment_status !== "paid" && (
                         <Button
@@ -572,12 +411,189 @@ const Invoices = () => {
         </CardContent>
       </Card>
 
-      {previewInvoice && (
-        <InvoicePreview
-          invoice={previewInvoice}
-          onClose={() => setPreviewInvoice(null)}
+      {/* ================= VIEW INVOICE ================= */}
+<Dialog
+  open={!!previewInvoice}
+  onOpenChange={() => setPreviewInvoice(null)}
+>
+  <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+    {previewInvoice && (
+      <InvoicePreview
+        invoice={previewInvoice}
+        onClose={() => setPreviewInvoice(null)}
+      />
+    )}
+  </DialogContent>
+</Dialog>
+
+{/* ================= Partial Payment ================= */}
+<Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Add Payment</DialogTitle>
+    </DialogHeader>
+
+    {selectedInvoice && (
+      <div className="space-y-4">
+        <p>Total: ₹{selectedInvoice.total_amount}</p>
+        <p>Paid: ₹{selectedInvoice.paid_amount}</p>
+        <p className="text-red-600">
+          Balance: ₹{selectedInvoice.balance_amount}
+        </p>
+
+        <Input
+          type="number"
+          placeholder="Payment amount"
+          value={paymentAmount}
+          onChange={e => setPaymentAmount(e.target.value)}
         />
-      )}
+
+        <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+          <SelectTrigger>
+            <SelectValue placeholder="Payment method" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="cash">Cash</SelectItem>
+            <SelectItem value="upi">UPI</SelectItem>
+            <SelectItem value="card">Card</SelectItem>
+            <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+            <SelectItem value="cheque">Cheque</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Button
+          className="w-full"
+          onClick={async () => {
+            if (!paymentAmount || Number(paymentAmount) <= 0) {
+              toast.error("Enter valid amount");
+              return;
+            }
+            if (!paymentMethod) {
+              toast.error("Select payment method");
+              return;
+            }
+
+            try {
+              await api.post("/api/payments", {
+                invoice_id: selectedInvoice.id,
+                amount: Number(paymentAmount),
+                payment_method: paymentMethod,
+              });
+
+              toast.success("Payment added");
+
+              setPaymentDialogOpen(false);
+              setSelectedInvoice(null);
+              setPaymentAmount("");
+              setPaymentMethod("");
+
+              fetchAll(); // 🔥 refresh table
+            } catch (err) {
+              toast.error(err.response?.data?.detail || "Payment failed");
+            }
+          }}
+        >
+          Save Payment
+        </Button>
+      </div>
+    )}
+  </DialogContent>
+</Dialog>
+
+{/* ================= EDIT INVOICE ================= */}
+<Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+  <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+    <DialogHeader>
+      <DialogTitle>Edit Invoice</DialogTitle>
+    </DialogHeader>
+
+    {editInvoice && (
+      <form
+        className="space-y-6"
+        onSubmit={async e => {
+          e.preventDefault();
+          try {
+            await api.put(`/api/invoices/${editInvoice.id}`, {
+              invoice_date: editInvoice.invoice_date,
+              notes: editInvoice.notes || "",
+              items: editInvoice.items.map(i => ({
+                product_id: i.product_id,
+                product_name: i.product_name,
+                quantity: Number(i.quantity),
+                price: Number(i.price),
+                gst_rate: Number(i.gst_rate),
+                total: Number(i.quantity) * Number(i.price),
+              })),
+            });
+
+            toast.success("Invoice updated");
+            setEditDialogOpen(false);
+            setEditInvoice(null);
+            fetchAll();
+          } catch (err) {
+            toast.error(err.response?.data?.detail || "Update failed");
+          }
+        }}
+      >
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Product</TableHead>
+              <TableHead>Qty</TableHead>
+              <TableHead>Price</TableHead>
+              <TableHead>Total</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {editInvoice.items.map((item, idx) => (
+              <TableRow key={idx}>
+                <TableCell>{item.product_name}</TableCell>
+                <TableCell>
+                  <Input
+                    type="number"
+                    value={item.quantity}
+                    onChange={e => {
+                      const qty = Number(e.target.value);
+                      const updated = [...editInvoice.items];
+                      updated[idx] = {
+                        ...updated[idx],
+                        quantity: qty,
+                        total: qty * updated[idx].price,
+                      };
+                      setEditInvoice({ ...editInvoice, items: updated });
+                    }}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Input
+                    type="number"
+                    value={item.price}
+                    onChange={e => {
+                      const price = Number(e.target.value);
+                      const updated = [...editInvoice.items];
+                      updated[idx] = {
+                        ...updated[idx],
+                        price,
+                        total: price * updated[idx].quantity,
+                      };
+                      setEditInvoice({ ...editInvoice, items: updated });
+                    }}
+                  />
+                </TableCell>
+                <TableCell>₹{item.total.toFixed(2)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+
+        <Button type="submit" className="w-full">
+          Update Invoice
+        </Button>
+      </form>
+    )}
+  </DialogContent>
+</Dialog>
+
     </div>
   );
 };

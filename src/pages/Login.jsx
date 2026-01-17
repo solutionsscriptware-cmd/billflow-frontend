@@ -28,7 +28,7 @@ const Login = () => {
     try {
       await login(loginData.email, loginData.password);
       toast.success('Welcome back!');
-      navigate('/');
+      navigate('/dashboard');
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Login failed');
     } finally {
@@ -37,23 +37,26 @@ const Login = () => {
   };
 
   const handleRegister = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      await register(
-        registerData.email,
-        registerData.password,
-        registerData.name,
-        registerData.company_name
-      );
-      toast.success('Account created successfully!');
-      navigate('/');
-    } catch (error) {
-      toast.error(error.response?.data?.detail || 'Registration failed');
-    } finally {
-      setLoading(false);
-    }
-  };
+  e.preventDefault();
+  setLoading(true);
+  try {
+
+   await register({
+     email: registerData.email,
+     password: registerData.password,
+     name: registerData.name,
+     company_name: registerData.company_name,
+   });
+
+    toast.success("Account created successfully!");
+    navigate('/dashboard');
+  } catch (error) {
+    toast.error(error.response?.data?.detail || "Registration failed");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
