@@ -1,7 +1,15 @@
+<<<<<<< HEAD
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+=======
+import React, { useState, useEffect, useRef } from "react";
+import axios from "axios";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+>>>>>>> befdee4dbc7502c1a28ad0176c2d2973b16304f4
 import { X, Printer, Download } from "lucide-react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -20,7 +28,11 @@ const formatDateDDMMYYYY = (dateStr) => {
 
 /* -------------------- COMPONENT -------------------- */
 const InvoicePreview = ({ invoice, onClose }) => {
+<<<<<<< HEAD
   const { user } = useAuth();
+=======
+  const { getAuthHeader } = useAuth();
+>>>>>>> befdee4dbc7502c1a28ad0176c2d2973b16304f4
 
   const [companySettings, setCompanySettings] = useState(null);
   const [customer, setCustomer] = useState(null);
@@ -28,11 +40,17 @@ const InvoicePreview = ({ invoice, onClose }) => {
   const printRef = useRef(null);
 
   useEffect(() => {
+<<<<<<< HEAD
     if (invoice) {
       fetchCompanySettings();
       fetchCustomer();
     }
   }, [invoice]);
+=======
+    fetchCompanySettings();
+    fetchCustomer();
+  }, []);
+>>>>>>> befdee4dbc7502c1a28ad0176c2d2973b16304f4
 
   /* -------------------- API CALLS -------------------- */
   const fetchCompanySettings = async () => {
@@ -43,7 +61,11 @@ const InvoicePreview = ({ invoice, onClose }) => {
         },
       });
       setCompanySettings(res.data);
+<<<<<<< HEAD
     } catch {
+=======
+    } catch (err) {
+>>>>>>> befdee4dbc7502c1a28ad0176c2d2973b16304f4
       console.error("Failed to load company settings");
     }
   };
@@ -52,6 +74,7 @@ const InvoicePreview = ({ invoice, onClose }) => {
     try {
       const res = await axios.get(
         `${API_URL}/customers/${invoice.customer_id}`,
+<<<<<<< HEAD
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -60,6 +83,12 @@ const InvoicePreview = ({ invoice, onClose }) => {
       );
       setCustomer(res.data);
     } catch {
+=======
+        getAuthHeader()
+      );
+      setCustomer(res.data);
+    } catch (err) {
+>>>>>>> befdee4dbc7502c1a28ad0176c2d2973b16304f4
       console.error("Failed to load customer");
     }
   };
@@ -136,6 +165,7 @@ const InvoicePreview = ({ invoice, onClose }) => {
             </div>
           </div>
 
+<<<<<<< HEAD
           <div className="text-right text-sm">
             <h2 className="font-bold">INVOICE</h2>
             <p className="font-mono font-semibold">
@@ -221,6 +251,153 @@ const InvoicePreview = ({ invoice, onClose }) => {
             <div className="flex justify-between text-red-600">
               <span>Balance</span>
               <span>₹{invoice.balance_amount.toFixed(2)}</span>
+=======
+          {/* INVOICE CONTENT */}
+          <div
+            ref={printRef}
+            className="bg-white p-8 rounded-lg text-black"
+          >
+            {/* HEADER */}
+            <div className="flex justify-between items-start pb-4 mb-3 border-b">
+              <div>
+                <h1 className="text-2xl font-bold text-primary">
+                  {companySettings.company_name}
+                </h1>
+
+                <div className="text-sm text-gray-700 leading-tight mt-1">
+                  {companySettings.address && (
+                    <p className="whitespace-pre-line">
+                      {companySettings.address}
+                    </p>
+                  )}
+                  {companySettings.phone && (
+                    <p>Phone: {companySettings.phone}</p>
+                  )}
+                  {companySettings.email && (
+                    <p>Email: {companySettings.email}</p>
+                  )}
+                  {companySettings.gst_number && (
+                    <p className="text-sm">
+                      GST: {companySettings.gst_number}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="text-right text-sm">
+                <h2 className="font-bold">INVOICE</h2>
+                <p className="font-mono font-semibold">
+                  {invoice.invoice_number}
+                </p>
+                <p>Date: {formatDateDDMMYYYY(invoice.created_at)}</p>
+              </div>
+            </div>
+
+            {/* BILL TO */}
+            <div className="mb-3">
+              <h3 className="font-semibold mb-1">Bill To:</h3>
+
+              <p className="text-sm font-medium">
+                {invoice.customer_name}
+              </p>
+
+              {customer.address && (
+                <p className="text-sm text-gray-700 whitespace-pre-line">
+                  {customer.address}
+                </p>
+              )}
+
+              {customer.phone && (
+                <p className="text-sm text-gray-700">
+                  Phone: {customer.phone}
+                </p>
+              )}
+
+              {customer.gst_number && (
+                <p className="text-sm text-gray-700">
+                  GST: {customer.gst_number}
+                </p>
+              )}
+            </div>
+
+            {/* ITEMS TABLE */}
+            <table className="w-full mb-6 text-sm border-collapse">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="text-left px-2 py-2">#</th>
+                  <th className="text-left px-2 py-2">Product</th>
+                  <th className="text-right px-2 py-2">Qty</th>
+                  <th className="text-right px-2 py-2">Price</th>
+                  <th className="text-right px-2 py-2">GST</th>
+                  <th className="text-right px-2 py-2">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {invoice.items.map((item, i) => (
+                  <tr key={i} className="hover:bg-gray-50">
+                    <td className="px-2 py-1">{i + 1}</td>
+                    <td className="px-2 py-1">{item.product_name}</td>
+                    <td className="text-right px-2 py-1">
+                      {item.quantity}
+                    </td>
+                    <td className="text-right px-2 py-1">
+                      ₹{item.price.toFixed(2)}
+                    </td>
+                    <td className="text-right px-2 py-1">
+                      {item.gst_rate}%
+                    </td>
+                    <td className="text-right px-2 py-1">
+                      ₹{item.total.toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* FULL WIDTH LINE ABOVE SUBTOTAL */}
+            <div className="w-full border-t border-gray-300 my-4"></div>
+
+            {/* TOTALS */}
+            <div className="flex justify-end">
+              <div className="w-60 space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span>Subtotal</span>
+                  <span>₹{invoice.subtotal.toFixed(2)}</span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>GST</span>
+                  <span>₹{invoice.gst_amount.toFixed(2)}</span>
+                </div>
+
+                <div className="flex justify-between font-semibold border-t pt-1">
+                  <span>Total</span>
+                  <span>₹{invoice.total_amount.toFixed(2)}</span>
+                </div>
+
+                <div className="flex justify-between text-green-600">
+                  <span>Paid</span>
+                  <span>₹{invoice.paid_amount.toFixed(2)}</span>
+                </div>
+
+                <div className="flex justify-between text-red-600">
+                  <span>Balance</span>
+                  <span>₹{invoice.balance_amount.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* NOTES */}
+            {invoice.notes && (
+              <div className="mt-6 text-sm">
+                <strong>Notes:</strong> {invoice.notes}
+              </div>
+            )}
+
+            {/* FOOTER */}
+            <div className="mt-10 text-center text-sm text-gray-500">
+              Thank you for your business!
+>>>>>>> befdee4dbc7502c1a28ad0176c2d2973b16304f4
             </div>
           </div>
         </div>
